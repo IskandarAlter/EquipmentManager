@@ -1,0 +1,28 @@
+﻿@inherits LayoutComponentBase
+@using EquipmentManager.Client.Shared
+
+<div class="app-layout">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+    <div class="main">
+        @Body
+    </div>
+</div>
+
+<style>
+    .app-layout {
+        display: flex;
+        min-height: 100vh;
+    }
+
+    .sidebar {
+        width: 220px;
+        background-color: #eee;
+    }
+
+    .main {
+        flex: 1;
+        padding: 1rem;
+    }
+</style>

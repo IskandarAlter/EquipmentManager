@@ -1,0 +1,69 @@
+﻿@page "/equipments"
+@inject HttpClient Http
+@using EquipmentManager.Client.Models
+
+<h3>Equipments List</h3>
+
+@if (equipments == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <ul>
+        @foreach (var eq in equipments)
+        {
+            <li style="margin-bottom:1.5rem;">
+                <strong>@eq.Name</strong> - @eq.Model <br />
+
+                @if (!string.IsNullOrEmpty(eq.ImagePath))
+                {
+                    <img src="@eq.ImagePath" width="150" />
+                    <br />
+                }
+
+                <a href="/edit-equipment/@eq.Id">Edit</a> |
+                <button @onclick="() => DeleteEquipment(eq.Id)" style="color:red; border:none; background:none; cursor:pointer;">
+                    Delete
+                </button>
+
+                <br />
+                <strong>Availability:</strong>
+                <ul>
+                    @foreach (var day in eq.Availability)
+                    {
+                        <li>@day.Date.ToShortDateString(): @(day.IsAvailable ? "✔️" : "❌")</li>
+                    }
+                </ul>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private List<Equipment>? equipments;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEquipments();
+    }
+
+    private async Task LoadEquipments()
+    {
+        equipments = await Http.GetFromJsonAsync<List<Equipment>>("api/equipment");
+    }
+
+    private async Task DeleteEquipment(int id)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete this equipment");
+        if (!confirmed) return;
+
+        var response = await Http.DeleteAsync($"api/equipment/{id}");
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadEquipments();
+        }
+    }
+
+    [Inject] public IJSRuntime JSRuntime { get; set; } = default!;
+}

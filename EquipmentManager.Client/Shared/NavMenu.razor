@@ -1,0 +1,52 @@
+﻿<nav class="nav">
+    <h4>Menu</h4>
+    <ul>
+        <li>
+            <NavLink href="/" Match="NavLinkMatch.All">
+                Main
+            </NavLink>
+        </li>
+        <li>
+            <NavLink href="/equipments">
+                Equipament List
+            </NavLink>
+        </li>
+        <li>
+            <NavLink href="/add-equipment">
+                Add Equipment
+            </NavLink>
+        </li>
+    </ul>
+</nav>
+
+<style>
+    .nav {
+        padding: 1rem;
+        background-color: #f5f5f5;
+        height: 100vh;
+    }
+
+    .nav h4 {
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+    }
+
+    .nav ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .nav li {
+        margin-bottom: 0.5rem;
+    }
+
+    .nav a {
+        text-decoration: none;
+        color: #333;
+    }
+
+    .nav a.active {
+        font-weight: bold;
+        color: #007acc;
+    }
+</style>

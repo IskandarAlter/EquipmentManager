@@ -1,0 +1,122 @@
+@page "/edit-equipment/{Id:int}"
+@inject HttpClient Http
+@using EquipmentManager.Client.Models
+@using Microsoft.AspNetCore.Components.Forms
+
+<h3>Edit Equipment</h3>
+
+@if (equipment == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <p><strong>Name:</strong> @equipment.Name</p>
+    <p><strong>Model:</strong> @equipment.Model</p>
+
+    @if (!string.IsNullOrEmpty(equipment.ImagePath))
+    {
+        <img src="@equipment.ImagePath" width="200" />
+    }
+
+    <h4>Upload Image</h4>
+    <InputFile OnChange="HandleFileSelected" />
+
+    @if (!string.IsNullOrEmpty(uploadMessage))
+    {
+        <p style="color:green">@uploadMessage</p>
+    }
+
+    <h4>Availability Calendar</h4>
+    <div class="calendar">
+        @foreach (var day in Days)
+        {
+            var exists = availability.FirstOrDefault(a => a.Date.Date == day.Date);
+            bool isAvailable = exists?.IsAvailable ?? false;
+            <button class="day" style="background:@(isAvailable ? "lightgreen" : "lightcoral")"
+                    @onclick="() => ToggleAvailability(day)">
+                @day.ToString("dd MMM")
+            </button>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Equipment? equipment;
+    private List<Availability> availability = new();
+    private string? uploadMessage;
+    private List<DateTime> Days = Enumerable.Range(0, 14)
+        .Select(i => DateTime.Today.AddDays(i))
+        .ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        equipment = await Http.GetFromJsonAsync<Equipment>($"api/equipment/{Id}");
+        if (equipment != null)
+        {
+            availability = await Http.GetFromJsonAsync<List<Availability>>($"api/availability/{Id}") ?? new();
+        }
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        var content = new MultipartFormDataContent();
+        var fileContent = new StreamContent(file.OpenReadStream());
+        content.Add(fileContent, "file", file.Name);
+
+        var response = await Http.PostAsync($"api/equipment/upload-image/{Id}", content);
+        if (response.IsSuccessStatusCode)
+        {
+            uploadMessage = "Imagem carregada com sucesso.";
+            equipment = await Http.GetFromJsonAsync<Equipment>($"api/equipment/{Id}");
+        }
+        else
+        {
+            uploadMessage = "Erro ao carregar imagem.";
+        }
+    }
+
+    private async Task ToggleAvailability(DateTime date)
+    {
+        var existing = availability.FirstOrDefault(a => a.Date.Date == date.Date);
+        if (existing == null)
+        {
+            var newEntry = new Availability
+            {
+                EquipmentId = Id,
+                Date = date,
+                IsAvailable = true
+            };
+            await Http.PostAsJsonAsync("api/availability", newEntry);
+        }
+        else
+        {
+            existing.IsAvailable = !existing.IsAvailable;
+            await Http.PutAsJsonAsync($"api/availability/{existing.Id}", existing);
+        }
+
+        // Refresh
+        availability = await Http.GetFromJsonAsync<List<Availability>>($"api/availability/{Id}") ?? new();
+    }
+}
+
+
+<style>
+    .calendar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .day {
+        padding: 0.5rem;
+        border: none;
+        border-radius: 4px;
+        min-width: 80px;
+        cursor: pointer;
+    }
+</style>

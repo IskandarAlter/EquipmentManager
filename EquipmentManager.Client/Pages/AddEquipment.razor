@@ -1,0 +1,46 @@
+@page "/add-equipment"
+@inject HttpClient Http
+@using EquipmentManager.Client.Models
+
+<h3>Add Equipment</h3>
+
+<EditForm Model="newEquipment" OnValidSubmit="HandleValidSubmit">
+    <InputText @bind-Value="newEquipment.Name" placeholder="Name" class="input" />
+    <br />
+    <InputText @bind-Value="newEquipment.Model" placeholder="Model" class="input" />
+    <br />
+    <button type="submit">Create</button>
+</EditForm>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <p style="color: green">@message</p>
+}
+
+@code {
+    private Equipment newEquipment = new();
+    private string? message;
+
+    private async Task HandleValidSubmit()
+    {
+        var response = await Http.PostAsJsonAsync("api/equipment", newEquipment);
+        if (response.IsSuccessStatusCode)
+        {
+            message = "Equipment added sucessfully!";
+            newEquipment = new(); 
+        }
+        else
+        {
+            message = "Error adding equipment.";
+        }
+    }
+}
+
+<style>
+    .input {
+        margin-bottom: 0.5rem;
+        padding: 0.4rem;
+        width: 300px;
+    }
+</style>
+
